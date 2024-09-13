@@ -17,16 +17,19 @@ Created on Sat Jul 13 12:31:53 2024
 
 import os
 import re
-import matplotlib.font_manager as fm
-from matplotlib.ticker import FuncFormatter
 from pathlib import Path
+
+import matplotlib.font_manager as fm
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 from lmfit import Model, Parameters
+from matplotlib.ticker import FuncFormatter
 from scipy.integrate import quad
-from scipy.optimize import least_squares, dual_annealing
-from scipy.odr import ODR, Model as ODRModel, RealData
+from scipy.odr import ODR
+from scipy.odr import Model as ODRModel
+from scipy.odr import RealData
+from scipy.optimize import dual_annealing, least_squares
 
 try:
     from pyswarm import pso
