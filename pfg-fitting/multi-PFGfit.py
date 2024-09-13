@@ -50,6 +50,10 @@ def model_3D_biexp(x, y0, D1, D2, f):
 def model_3D_stretchexp(x, y0, D, b):
     return y0 * np.exp(-(x * D)**b)
 
+def model_combo(x, y0, Din, Dout, D1, D2, f):
+    return y0 * np.array([quad(integrand, 0, np.pi/2, args=(xi, Din, Dout))[0]
+            + (f * np.exp(-xi * D1) + (1 - f) * np.exp(-xi * D2)) for xi in x])
+
 # Data handling functions
 
 def PFG_data_extract(data_dir, exp_no, nucleus):
@@ -246,18 +250,20 @@ def fit_and_plot(x_data, y_data, chosen_models, chosen_methods, plot_options, fi
     fig, ax = plt.subplots(figsize=(plot_options['fig_width'], plot_options['fig_height']))
 
     models = {
+        # model_name, model_func, line_style, param_names, transparency
         1: ("2D model (Dout=0)", model_integral_Dout0, '--', ['Din'], 0.7),
         2: ("2D model (Dout ≠ 0)", model_integral, '--', ['Din', 'Dout'], 0.5),
         3: ("3D Monoexponential", model_3D_monoexp, '--', ['D'], 0.9),
         4: ("3D Biexponential", model_3D_biexp, '--', ['D1', 'D2', 'f'], 0.8),
         5: ("3D Stretched Exponential", model_3D_stretchexp, '--', ['D', 'b'], 0.6),
+        6: ("2D + 3D Biexponential", model_combo, '--', ['Din', 'Dout', 'D1', 'D2'], 0.7)
     }
     method_used = []
     D_values = []
     errors = []
 
     # Allow customization of model and method colors
-    model_colors = plot_options.get('model_colors', {1: 'red', 2: 'blue', 3: 'yellow', 4: 'green', 5: 'magenta'})
+    model_colors = plot_options.get('model_colors', {1: 'red', 2: 'blue', 3: 'yellow', 4: 'green', 5: 'magenta', 6: 'purple'})
     method_colors = plot_options.get('method_colors', {'de': 'blue', 'pso': 'green', 'sa': 'red', 'odr': 'purple', 'trf': 'orange'})
     use_model_color = plot_options.get('model_color', True)  # Default to True if not specified
 
@@ -406,6 +412,13 @@ def setup_parameters(model_num):
         params.add('y0', value=1.0, min=0.97, max=1.0)
         params.add('D', value=1.0e-13, min=1e-15, max=9e-10)
         params.add('b', value=0.8, min=0.1, max=1.0)
+    elif model_num == 6:  # 3D Stretched Exponential
+        params.add('y0', value=1.0, min=0.97, max=1.0)
+        params.add('Din', value=1.0e-13, min=5e-15, max=1e-12)
+        params.add('Dout', value=1.0e-13, min=5e-15, max=1e-12)
+        params.add('D1', value=5.00e-12, min=1e-14, max=1e-10)
+        params.add('D2', value=1.00e-12, min=1e-14, max=1e-10)
+        params.add('f', value=0.5, min=0.0, max=1.0)
     return params
 
 
@@ -555,7 +568,8 @@ def main():
         return
 
     # Choose model and optimization method
-    chosen_models = [4]  # Choose models to fit
+    chosen_models = [1, 2, 3, 4, 5, 6]  # Try all models
+    # chosen_models = [4]  # Choose models to fit
     chosen_methods = ["de"]  # Choose methods to use [de, sa, pso, odr, trf]
 
     # Plot options (you can modify these as needed)
