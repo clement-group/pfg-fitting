@@ -283,7 +283,7 @@ def trf_wrapper(func, bounds, args):
     def wrapper(x, *args):
         return func(args[0], *x) - args[1]
     lb, ub = zip(*bounds)
-    result = least_squares(wrapper, x0=[(l+u)/2 for l, u in zip(lb, ub)],
+    result = least_squares(wrapper, x0=[(li+ui)/2 for li, ui in zip(lb, ub)],
                            bounds=(lb, ub), args=args, method='trf')
     return result.x
 
