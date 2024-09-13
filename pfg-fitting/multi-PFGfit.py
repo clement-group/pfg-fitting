@@ -460,9 +460,9 @@ def print_results(result, r_squared, adjusted_r_squared):
     print(f"Adjusted R-squared: {adjusted_r_squared:.4g}")
 
 def main():
-    folder_path = r'C:\Users\bhatt\OneDrive\Desktop\TP'  # Path to folder containing data files
-    output_folder = r'C:\Users\bhatt\OneDrive\Desktop\TP'  # Output folder for results
-    
+    folder_path = '/Users/tylerpennebaker/Library/CloudStorage/Box-Box/Elias-Raphaële shared folder/LGES project/WP6/Structural_stability/NMR data/PFG_fits/anisotropic_analyis/t1ints'  # Path to folder containing data files
+    output_folder = '/Users/tylerpennebaker/Library/CloudStorage/Box-Box/Elias-Raphaële shared folder/LGES project/WP6/Structural_stability/NMR data/PFG_fits/anisotropic_analyis/out'  # Output folder for results
+
     # Get all files in the folder
     files = [file for file in os.listdir(folder_path) if file.endswith(('.xlsx', '.csv', '.txt'))]
 
