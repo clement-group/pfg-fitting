@@ -52,6 +52,79 @@ def model_3D_stretchexp(x, y0, D, b):
 
 # Data handling functions
 
+def PFG_data_extract(data_dir, exp_no, nucleus):
+    #Inputs:
+        # exp_no (string): experiment no. to extract data (measurement folder specified in data_dir above)
+        # nucleus (string): identity of observed nucleus (1H, 7Li, 19F are accepted here)
+
+    #Returns:
+        # diff_decay (dataframe): dataframe with 3 columns ('grad_strength [G/cm]','diff_ints','norm_diff_ints')
+        # gamma (float): gyromagnetic ratio of observed nucleus [given in Hz/T]
+        # delta (float): little delta time (duration of gradient pulse) [ms]
+        # DELTA (float): big delta time (diffusion time) [ms]
+
+    #Extract dataframe of decay curve from folder
+    exp_path = os.path.join(data_dir, str(exp_no))
+
+    #Find t1ints.txt file
+    t1_ints = pd.read_csv(exp_path + '/pdata/1/t1ints.txt', names=['no1', 'ints', 'no3'], delim_whitespace=True,skiprows=1)
+
+    #Extract integral values from t1ints.txt file
+    diff_ints = t1_ints[t1_ints['ints'] != 0]['ints']
+    diff_ints = diff_ints.reset_index(drop=True) #Reset df index so that the values now go from 0 to number of pts
+    norm_diff_ints = diff_ints/(diff_ints.max())
+
+    #Extract gradient strengths from difflist file
+    grad_strength = pd.read_csv(exp_path +'/difflist',names=['grad_strength'],header=None)  #No header as first line is first point, not header
+
+    #Create diff_decay df with
+    diff_decay = pd.concat([grad_strength, diff_ints, norm_diff_ints], axis=1)
+    diff_decay.columns = ['grad_strength', 'diff_ints', 'norm_diff_ints']
+    diff_decay = diff_decay.dropna()
+
+
+    #Obtain delta and DELTA values from diff.xml
+    with open(exp_path + '/diff.xml') as myfile:
+        content = myfile.read()
+    delta = re.search('<delta>(.*)</delta>', content).group(1)
+    delta = float(delta)                                        # Convert to a float from a string
+
+    DELTA = re.search('<DELTA>(.*)</DELTA>', content).group(1)
+    DELTA = float(DELTA)                                        # Convert to a float from a string
+
+    #Define gamma according to observed nucleus
+    if nucleus == '7Li':
+        # gamma = 16.546e6 # MHz/T
+        gamma = 10.39677e7   # gyromagnetic ratio in rad⋅s−1⋅T−1
+    # elif nucleus == '1H':
+    #     gamma = 42.58e6
+    # elif nucleus == '19F':
+    #     gamma = 40.08e6
+    else:
+        raise Exception("Sorry, the gamma of this nucleus is not included in this")
+
+    # return diff_decay, gamma, delta, DELTA
+    v = gamma
+    d = delta * 1e-3 # change from ms to s
+    D = DELTA * 1e-3 # change from ms to s
+
+    x_data = (diff_decay['grad_strength']**2)*(v ** 2) * (d ** 2) * (D - d / 3) * 1e-4
+    y_data = diff_decay['norm_diff_ints']
+
+    mask = np.array(~(np.isnan(x_data) | np.isnan(y_data)))
+    x_data = x_data[mask].values
+    y_data = y_data[mask].values
+
+    print(f'x_data is {x_data.shape}')
+
+    if len(x_data) == 0 or len(y_data) == 0:
+        print(f"Error: No valid numeric data found in columns of {exp_path}")
+        return None, None
+
+    print(f"Successfully read {len(x_data)} data points from columns of {exp_path}")
+    return x_data, y_data
+
+
 def read_data(file_path, n1=0, n2=1, v=None, d=None, D=None):
     try:
         # Determine file type
@@ -460,19 +533,25 @@ def print_results(result, r_squared, adjusted_r_squared):
     print(f"Adjusted R-squared: {adjusted_r_squared:.4g}")
 
 def main():
+    exp_path = '/Users/tylerpennebaker/BoxSync/structural_stability/300_test'
     folder_path = '/Users/tylerpennebaker/Library/CloudStorage/Box-Box/Elias-Raphaële shared folder/LGES project/WP6/Structural_stability/NMR data/PFG_fits/anisotropic_analyis/t1ints'  # Path to folder containing data files
     output_folder = '/Users/tylerpennebaker/Library/CloudStorage/Box-Box/Elias-Raphaële shared folder/LGES project/WP6/Structural_stability/NMR data/PFG_fits/anisotropic_analyis/out'  # Output folder for results
 
     # Get all files in the folder
-    files = [file for file in os.listdir(folder_path) if file.endswith(('.xlsx', '.csv', '.txt'))]
+    # files = [file for file in os.listdir(folder_path) if file.endswith(('.xlsx', '.csv', '.txt'))]
+    dirs = sorted([file for file in os.listdir(exp_path)])
 
     # Prompt user to select files
-    print("Select files to process (enter numbers separated by spaces):")
-    for i, file in enumerate(files, start=1):
-        print(f"{i}. {file}")
+    # print("Select files to process (enter numbers separated by spaces):")
+    # for i, file in enumerate(files, start=1):
+    #     print(f"{i}. {file}")
+    # try:
+    #     file_selection = list(map(int, input("Enter selection: ").split()))
+    #     selected_files = [files[i-1] for i in file_selection]
+    print("Select exp_nos to process (enter numbers separated by spaces):")
+    print(dirs)
     try:
-        file_selection = list(map(int, input("Enter selection: ").split()))
-        selected_files = [files[i-1] for i in file_selection]
+        exp_selection = list(map(int, input("Enter selection: ").split()))
     except (IndexError, ValueError):
         print("Invalid selection. Please enter numbers separated by spaces.")
         return
@@ -503,16 +582,21 @@ def main():
     }
 
 
-    v = 10.39677E7   # Gamma,gyromagnetic ratio in rad⋅s−1⋅T−1
-    d = 0.0041 # small delta,, gradient duration in second
-    D = 0.085 # Big delta, diffusion time in second
-    
+    # v = 10.39677E7   # Gamma,gyromagnetic ratio in rad⋅s−1⋅T−1
+    # d = 0.003 # small delta,, gradient duration in second
+    # D = 0.020 # Big delta, diffusion time in second
+
     # Specify column numbers directly in the code
-    n1, n2 = 0, 1
-    for file_name in selected_files:
-        file_path = os.path.join(folder_path, file_name)
-        print(f"\nProcessing file: {file_name}")
-        x_data, y_data = read_data(file_path, n1, n2, v=v, d=d, D=D)  # Pass parameters to read_data
+    # n1, n2 = 0, 1
+    # for file_name in selected_files:
+
+    for exp_no in exp_selection:
+        file_name = str(exp_no)
+        # file_path = os.path.join(folder_path, file_name)
+        # print(f"\nProcessing file: {file_name}")
+        x_data, y_data = PFG_data_extract(exp_path, exp_no, nucleus='7Li')  # Pass parameters to read_data
+
+        # x_data, y_data = read_data(file_path, n1, n2, v=v, d=d, D=D)  # Pass parameters to read_data
         if x_data is None or y_data is None:
             print(f"Error reading data from {file_name}. Skipping this file.")
             continue
