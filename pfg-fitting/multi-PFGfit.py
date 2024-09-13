@@ -50,9 +50,9 @@ def model_3D_biexp(x, y0, D1, D2, f):
 def model_3D_stretchexp(x, y0, D, b):
     return y0 * np.exp(-(x * D)**b)
 
-def model_combo(x, y0, Din, Dout, D1, D2, f):
-    return y0 * np.array([quad(integrand, 0, np.pi/2, args=(xi, Din, Dout))[0]
-            + (f * np.exp(-xi * D1) + (1 - f) * np.exp(-xi * D2)) for xi in x])
+def model_combo(x, y0, Din, Dout, D1, D2, f1, f2):
+    return y0 * np.array([(1-f1-f2) * quad(integrand, 0, np.pi/2, args=(xi, Din, Dout))[0]
+            + f1 * np.exp(-xi * D1) + f2 * np.exp(-xi * D2) for xi in x])
 
 # Data handling functions
 
@@ -256,7 +256,7 @@ def fit_and_plot(x_data, y_data, chosen_models, chosen_methods, plot_options, fi
         3: ("3D Monoexponential", model_3D_monoexp, '--', ['D'], 0.9),
         4: ("3D Biexponential", model_3D_biexp, '--', ['D1', 'D2', 'f'], 0.8),
         5: ("3D Stretched Exponential", model_3D_stretchexp, '--', ['D', 'b'], 0.6),
-        6: ("2D + 3D Biexponential", model_combo, '--', ['Din', 'Dout', 'D1', 'D2'], 0.7)
+        6: ("2D + 3D Biexponential", model_combo, '--', ['Din', 'Dout', 'D1', 'D2', 'f1', 'f2'], 0.7)
     }
     method_used = []
     D_values = []
@@ -418,7 +418,8 @@ def setup_parameters(model_num):
         params.add('Dout', value=1.0e-13, min=5e-15, max=1e-12)
         params.add('D1', value=5.00e-12, min=1e-14, max=1e-10)
         params.add('D2', value=1.00e-12, min=1e-14, max=1e-10)
-        params.add('f', value=0.5, min=0.0, max=1.0)
+        params.add('f1', value=0.3, min=0.0, max=1.0)
+        params.add('f2', value=0.3, min=0.0, max=1.0)
     return params
 
 
