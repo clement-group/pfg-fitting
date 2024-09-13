@@ -137,7 +137,7 @@ def read_data(file_path, n1=0, n2=1, v=None, d=None, D=None):
     try:
         # Determine file type
         _, file_extension = os.path.splitext(file_path)
-        
+
         # Read the file based on its extension
         if file_extension.lower() == '.csv':
             df = pd.read_csv(file_path, header=None)
@@ -145,7 +145,7 @@ def read_data(file_path, n1=0, n2=1, v=None, d=None, D=None):
             df = pd.read_excel(file_path, header=None)
         elif file_extension.lower() == '.txt':
             # First, try to read as a structured text file
-            with open(file_path, 'r') as file:
+            with open(file_path, 'r', encoding='iso-8859-1') as file:
                 content = file.read()
             data_section = re.search(r'Point\s+Gradient\s+Expt\s+Calc\s+Difference\n([\s\S]+)', content)
 
@@ -157,7 +157,7 @@ def read_data(file_path, n1=0, n2=1, v=None, d=None, D=None):
                 n2 = df.columns.get_loc('Expt')
             else:
                 # If structured format not found, read as space-separated
-                df = pd.read_csv(file_path, sep=r'\s+', header=None)
+                df = pd.read_csv(file_path, sep=r'\s+', header=None, encoding='iso-8859-1')
         else:
             print(f"Unsupported file format: {file_extension}")
             return None, None
@@ -188,7 +188,7 @@ def read_data(file_path, n1=0, n2=1, v=None, d=None, D=None):
 
         print(f"Successfully read {len(x_data)} data points from columns {n1} and {n2} of {file_path}")
         return x_data, y_data
-    
+
     except Exception as e:
         print(f"Error reading file {file_path}: {str(e)}")
         return None, None
