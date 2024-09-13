@@ -7,7 +7,7 @@ Created on Sat Jul 13 12:31:53 2024
 #After fitting PFG data in the Topspin save it as .txt file.
 #For any other .txt file, should provide n1 and n2 values in the main function
 #It has option for method and model choice to fit the data
-#One can use weigted average for the data, True or Flase option
+#One can use weigted average for the data, True or False option
 #color for model or method controlled by plot option
 #Intensity weight is preffered
 #10-4 is multiplied to convert gauss/cm to T/m
@@ -140,7 +140,7 @@ def read_data(file_path, n1=0, n2=1, v=None, d=None, D=None):
             with open(file_path, 'r') as file:
                 content = file.read()
             data_section = re.search(r'Point\s+Gradient\s+Expt\s+Calc\s+Difference\n([\s\S]+)', content)
-            
+
             if data_section:
                 data_lines = data_section.group(1).strip().split('\n')
                 data = [line.split() for line in data_lines]
@@ -173,11 +173,11 @@ def read_data(file_path, n1=0, n2=1, v=None, d=None, D=None):
         mask = ~(np.isnan(x_data) | np.isnan(y_data))
         x_data = x_data[mask].values
         y_data = y_data[mask].values
-        
+
         if len(x_data) == 0 or len(y_data) == 0:
             print(f"Error: No valid numeric data found in columns {n1} and {n2} of {file_path}")
             return None, None
-        
+
         print(f"Successfully read {len(x_data)} data points from columns {n1} and {n2} of {file_path}")
         return x_data, y_data
     
@@ -186,7 +186,7 @@ def read_data(file_path, n1=0, n2=1, v=None, d=None, D=None):
         return None, None
 
 
-    
+
 def save_results(output_file_path, file_name, x_data, y_data, fits, model_names, method_used, r_squared_values, D_values, errors):
     with open(output_file_path, 'w', encoding='utf-8') as f:
         headers = ["X", "Experimental Data"] + model_names
@@ -242,9 +242,9 @@ def trf_wrapper(func, bounds, args):
 # Fitting and plotting function
 def fit_and_plot(x_data, y_data, chosen_models, chosen_methods, plot_options, file_name=None, use_inverse_variance_weighting=False, use_squared_intensity_weighting=False, use_weighted_least_squares=False):
     fits, model_names, r_squared_values = [], [], []
-    
+
     fig, ax = plt.subplots(figsize=(plot_options['fig_width'], plot_options['fig_height']))
-    
+
     models = {
         1: ("2D model (Dout=0)", model_integral_Dout0, '--', ['Din'], 0.7),
         2: ("2D model (Dout ≠ 0)", model_integral, '--', ['Din', 'Dout'], 0.5),
@@ -266,18 +266,18 @@ def fit_and_plot(x_data, y_data, chosen_models, chosen_methods, plot_options, fi
     }
 
     weights = None
-  
+
     if use_inverse_variance_weighting:
         # Estimate variance based on y-values
         # Assume a constant relative error (e.g., 5%)
         relative_error = 0.03
         estimated_variance = (relative_error * y_data)**2
-        
+
         epsilon = 1e-16  # Small constant to avoid division by zero
         weights = 1 / (estimated_variance + epsilon)
-        
+
         print("Using estimated inverse variance weighting based on constant relative error.")
-            
+
     elif use_squared_intensity_weighting:
         weights = y_data**2
     elif use_weighted_least_squares:
@@ -291,9 +291,9 @@ def fit_and_plot(x_data, y_data, chosen_models, chosen_methods, plot_options, fi
             print(f"\nFitting {model_name} using {method}...")
             lmfit_model = Model(model_func)
             params = setup_parameters(model_num)
-            
+
             label = ""  # Initialize label variable
-            
+
             try:
                 if method == 'de':
                     result = lmfit_model.fit(y_data, params, x=x_data, method='differential_evolution', weights=weights)
@@ -326,7 +326,7 @@ def fit_and_plot(x_data, y_data, chosen_models, chosen_methods, plot_options, fi
                 result = lmfit_model.fit(y_data, result.params, x=x_data, method='leastsq', weights=weights)
                 x_fit = np.linspace(min(x_data), max(x_data), 1000)
                 y_fit = result.eval(x=x_fit)
-                
+
                 # Calculate R-squared
                 y_pred = result.eval(x=x_data)
                 if weights is not None:
@@ -352,20 +352,20 @@ def fit_and_plot(x_data, y_data, chosen_models, chosen_methods, plot_options, fi
 
                 if r_squared < 0 or adjusted_r_squared < 0:
                     print("Warning: Negative R-squared or Adjusted R-squared detected.")
-                     
+
                 # Calculate sum of squared residuals
                 sum_squared_residuals = np.sum((y_data - y_pred)**2)
                 print(f"Sum of Squared Residuals: {sum_squared_residuals:.6f}")
 
                 label = f'{model_name} ({method}), ' + ', '.join([f'{p} = {result.best_values[p]:.2E}' for p in param_names if p.startswith('D')])
                 label += f', R² = {r_squared:.4g}'
-             
+
                 # Determine the color based on model_color setting
                 if use_model_color:
                     color = model_colors.get(model_num, 'black')
                 else:
                     color = method_colors.get(method, 'black')
-            
+
                 ax.plot(x_fit, y_fit, label=label, color=color, linestyle=line_style, linewidth=plot_options['line_width'], alpha=method_transparency[method])
                 fits.append(y_pred)
                 model_names.append(label)
@@ -378,7 +378,7 @@ def fit_and_plot(x_data, y_data, chosen_models, chosen_methods, plot_options, fi
                 print(f"Error fitting {model_name} using {method}: {e}")
 
     ax.scatter(x_data, y_data, label='Experimental Data', color=plot_options.get('data_color', 'black'), s=48)
-      
+
     # Customize plot
     customize_plot(ax, plot_options, file_name)
     if file_name:
@@ -413,13 +413,13 @@ def setup_parameters(model_num):
 def plot_and_save(output_folder, file_name, fig, plot_options):
     # Ensure the output directory exists
     Path(output_folder).mkdir(parents=True, exist_ok=True)
-    
+
     # Construct the output file path
     plot_output_file_path = Path(output_folder) / f"plot_{Path(file_name).stem}.png"
-    
+
     # Save the figure
     fig.savefig(plot_output_file_path, dpi=plot_options['dpi_value'])
-    
+
 # Disable LaTeX rendering
 plt.rcParams['text.usetex'] = False
 
@@ -437,7 +437,7 @@ def customize_plot(ax, plot_options, file_name):
     font_name = plot_options.get('font_name', 'Arial')
 
     # Set x-axis label
-    ax.set_xlabel(plot_options.get('x_label', 'X Axis Label'), 
+    ax.set_xlabel(plot_options.get('x_label', 'X Axis Label'),
                   fontdict={'family': font_name,
                             'size': plot_options.get('x_label_fontsize', 12),
                             'style': plot_options.get('x_label_fontstyle', 'normal'),
@@ -445,7 +445,7 @@ def customize_plot(ax, plot_options, file_name):
                   color=plot_options.get('x_label_color', 'black'))
 
     # Set y-axis label
-    ax.set_ylabel(plot_options.get('y_label', 'Y Axis Label'), 
+    ax.set_ylabel(plot_options.get('y_label', 'Y Axis Label'),
                   fontdict={'family': font_name,
                             'size': plot_options.get('y_label_fontsize', 12),
                             'style': plot_options.get('y_label_fontstyle', 'normal'),
@@ -454,7 +454,7 @@ def customize_plot(ax, plot_options, file_name):
 
     # Set title
     if plot_options.get('auto_title', True):
-        ax.set_title(f"Fit using {Path(file_name).stem}", 
+        ax.set_title(f"Fit using {Path(file_name).stem}",
                      fontdict={'family': font_name,
                                'size': plot_options.get('title_fontsize', 14),
                                'style': plot_options.get('title_fontstyle', 'normal'),
@@ -462,15 +462,15 @@ def customize_plot(ax, plot_options, file_name):
                      color=plot_options.get('title_color', 'black'))
 
     # Set legend
-    ax.legend(loc=plot_options['legend_loc'], 
+    ax.legend(loc=plot_options['legend_loc'],
               prop={'family': font_name, 'size': plot_options.get('legend_fontsize', 10)})
 
     # Set tick label font and size
-    tick_font = fm.FontProperties(family=font_name, 
+    tick_font = fm.FontProperties(family=font_name,
                                   size=plot_options.get('tick_fontsize', 10))
     for label in ax.get_xticklabels() + ax.get_yticklabels():
         label.set_fontproperties(tick_font)
-        
+
     # Scientific notation for x-axis
     if plot_options.get('x_scientific', False):
         ax.xaxis.set_major_formatter(FuncFormatter(scientific_formatter))
@@ -493,15 +493,15 @@ def customize_plot(ax, plot_options, file_name):
     ax.xaxis.set_minor_locator(plt.MaxNLocator(plot_options['x_minor_ticks']))
     ax.yaxis.set_major_locator(plt.MaxNLocator(plot_options['y_major_ticks']))
     ax.yaxis.set_minor_locator(plt.MaxNLocator(plot_options['y_minor_ticks']))
-    ax.tick_params(axis='x', which='major', length=plot_options['x_major_tick_length'], 
+    ax.tick_params(axis='x', which='major', length=plot_options['x_major_tick_length'],
                    width=plot_options['x_major_tick_width'], colors=plot_options.get('x_tick_color', 'black'),
                    labelsize=plot_options.get('tick_fontsize', 10))
-    ax.tick_params(axis='x', which='minor', length=plot_options['x_minor_tick_length'], 
+    ax.tick_params(axis='x', which='minor', length=plot_options['x_minor_tick_length'],
                    width=plot_options['x_minor_tick_width'], colors=plot_options.get('x_tick_color', 'black'))
-    ax.tick_params(axis='y', which='major', length=plot_options['y_major_tick_length'], 
+    ax.tick_params(axis='y', which='major', length=plot_options['y_major_tick_length'],
                    width=plot_options['y_major_tick_width'], colors=plot_options.get('y_tick_color', 'black'),
                    labelsize=plot_options.get('tick_fontsize', 10))
-    ax.tick_params(axis='y', which='minor', length=plot_options['y_minor_tick_length'], 
+    ax.tick_params(axis='y', which='minor', length=plot_options['y_minor_tick_length'],
                    width=plot_options['y_minor_tick_width'], colors=plot_options.get('y_tick_color', 'black'))
 
     # Customize axis visibility and thickness
@@ -521,9 +521,7 @@ def customize_plot(ax, plot_options, file_name):
         ax.set_xscale('log')
     if plot_options['y_scale'] == 'log':
         ax.set_yscale('log')
-   
-   
-        
+
 
 def print_results(result, r_squared, adjusted_r_squared):
     print("Fit Parameters:")
@@ -555,11 +553,11 @@ def main():
     except (IndexError, ValueError):
         print("Invalid selection. Please enter numbers separated by spaces.")
         return
-    
+
     # Choose model and optimization method
     chosen_models = [4]  # Choose models to fit
     chosen_methods = ["de"]  # Choose methods to use [de, sa, pso, odr, trf]
-    
+
     # Plot options (you can modify these as needed)
     plot_options = {
         'x_limit': None, 'y_limit': None, 'legend_fontsize': 20,
