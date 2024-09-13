@@ -25,9 +25,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from lmfit import Model, Parameters
 from scipy.integrate import quad
-from pyswarm import pso
 from scipy.optimize import least_squares, dual_annealing
 from scipy.odr import ODR, Model as ODRModel, RealData
+
+try:
+    from pyswarm import pso
+except ImportError:
+    pso = None
 
 # Model functions
 def integrand(q, x, Din, Dout):
@@ -304,11 +308,14 @@ def fit_and_plot(x_data, y_data, chosen_models, chosen_methods, plot_options, fi
                 if method == 'de':
                     result = lmfit_model.fit(y_data, params, x=x_data, method='differential_evolution', weights=weights)
                 elif method == 'pso':
-                    bounds = [(p.min, p.max) for p in params.values()]
-                    pso_result = pso_wrapper(lmfit_model.func, bounds, (x_data, y_data))
-                    for i, p in enumerate(params):
-                        params[p].value = pso_result[i]
-                    result = lmfit_model.fit(y_data, params, x=x_data, weights=weights)
+                    if pso:
+                        bounds = [(p.min, p.max) for p in params.values()]
+                        pso_result = pso_wrapper(lmfit_model.func, bounds, (x_data, y_data))
+                        for i, p in enumerate(params):
+                            params[p].value = pso_result[i]
+                        result = lmfit_model.fit(y_data, params, x=x_data, weights=weights)
+                    else:
+                        raise ModuleNotFoundError("pyswarm.pso not found")
                 elif method == 'sa':
                     bounds = [(p.min, p.max) for p in params.values()]
                     sa_result = sa_wrapper(lmfit_model.func, bounds, (x_data, y_data))
