@@ -653,38 +653,54 @@ def print_results(result, r_squared, adjusted_r_squared):
 
 
 def main():
+    # Switch between type of files being read
+    # True = read directly from TopSpin experiment at topspin_path
+    # False = read from fit files of various formats in folder_path
+    topspin = True
+
     # Path to TopSpin experiment folder
-    exp_path = '/Users/tylerpennebaker/BoxSync/structural_stability/300_test'
+    topspin_path = ('/Users/tylerpennebaker/BoxSync/structural_stability/'
+                    '300_test')
     # Path to folder containing data files
-    # folder_path = ('/Users/tylerpennebaker/Library/CloudStorage/Box-Box/'
-    #                'Elias-Raphaële shared folder/LGES project/WP6/'
-    #                'Structural_stability/NMR data/PFG_fits/'
-    #                'anisotropic_analyis/t1ints')
+    folder_path = ('/Users/tylerpennebaker/Library/CloudStorage/Box-Box/'
+                   'Elias-Raphaële shared folder/LGES project/WP6/'
+                   'Structural_stability/NMR data/PFG_fits/'
+                   'anisotropic_analyis/t1ints')
     # Output folder for results
     output_folder = ('/Users/tylerpennebaker/Library/CloudStorage/Box-Box/'
                      'Elias-Raphaële shared folder/LGES project/WP6/'
                      'Structural_stability/NMR data/PFG_fits/'
                      'anisotropic_analyis/out')
 
-    # Get all files in the folder
-    # files = [file for file in os.listdir(folder_path)
-    #          if file.endswith(('.xlsx', '.csv', '.txt'))]
-    dirs = sorted([file for file in os.listdir(exp_path)])
+    if topspin:
+        # Get all files in the folder
+        dirs = sorted([file for file in os.listdir(topspin_path)])
 
-    # Prompt user to select files
-    # print("Select files to process (enter numbers separated by spaces):")
-    # for i, file in enumerate(files, start=1):
-    #     print(f"{i}. {file}")
-    # try:
-    #     file_selection = list(map(int, input("Enter selection: ").split()))
-    #     selected_files = [files[i-1] for i in file_selection]
-    print("Select exp_nos to process (enter numbers separated by spaces):")
-    print(dirs)
-    try:
-        exp_selection = list(map(int, input("Enter selection: ").split()))
-    except (IndexError, ValueError):
-        print("Invalid selection. Please enter numbers separated by spaces.")
-        return
+        # Prompt user to select files
+        print("Select exp_nos to process (enter numbers separated by spaces):")
+        print(dirs)
+        try:
+            exp_selection = list(map(int, input("Enter selection: ").split()))
+        except (IndexError, ValueError):
+            print("Invalid selection. Please enter numbers "
+                  "separated by spaces.")
+            return
+
+    else:
+        # Get all files in the folder
+        files = [file for file in os.listdir(folder_path)
+                 if file.endswith(('.xlsx', '.csv', '.txt'))]
+        # Prompt user to select files
+        print("Select files to process (enter numbers separated by spaces):")
+        for i, file in enumerate(files, start=1):
+            print(f"{i}. {file}")
+        try:
+            file_selection = list(map(int, input("Enter selection: ").split()))
+            exp_selection = [files[i-1] for i in file_selection]
+        except (IndexError, ValueError):
+            print("Invalid selection. Please enter numbers"
+                  " separated by spaces.")
+            return
 
     # Choose model and optimization method
     chosen_models = [1, 2, 3, 4, 5, 6]  # Try all models
@@ -717,22 +733,24 @@ def main():
         'y_scale': 'linear', 'dpi_value': 300, 'output_folder': output_folder
     }
 
-    # v = 10.39677E7   # Gamma,gyromagnetic ratio in rad⋅s−1⋅T−1
-    # d = 0.003 # small delta,, gradient duration in second
-    # D = 0.020 # Big delta, diffusion time in second
-
-    # Specify column numbers directly in the code
-    # n1, n2 = 0, 1
-    # for file_name in selected_files:
-
-    for exp_no in exp_selection:
-        file_name = str(exp_no)
-        # file_path = os.path.join(folder_path, file_name)
-        # print(f"\nProcessing file: {file_name}")
+    for exp in exp_selection:
+        file_name = str(exp)
+        print(f"\nProcessing file: {file_name}")
 
         # Pass parameters to read_data
-        x_data, y_data = PFG_data_extract(exp_path, exp_no, nucleus='7Li')
-        # x_data, y_data = read_data(file_path, n1, n2, v=v, d=d, D=D)
+        if topspin:
+            x_data, y_data = PFG_data_extract(topspin_path, exp, nucleus='7Li')
+        else:
+            # Hard-code these for now, should be read from file
+            v = 10.39677E7  # Gamma,gyromagnetic ratio in rad⋅s−1⋅T−1
+            d = 0.003  # small delta,, gradient duration in second
+            D = 0.020  # Big delta, diffusion time in second
+
+            # Specify column numbers directly in the code
+            n1, n2 = 0, 1
+
+            file_path = os.path.join(folder_path, file_name)
+            x_data, y_data = read_data(file_path, n1, n2, v=v, d=d, D=D)
 
         if x_data is None or y_data is None:
             print(f"Error reading data from {file_name}. Skipping this file.")
