@@ -402,22 +402,22 @@ def setup_parameters(model_num):
     params = Parameters()
     if model_num == 1:  # 2D model (Dout=0)
         params.add('y0', value=1.01, min=0.95, max=1.0)
-        params.add('Din', value=5.0e-13, min=1e-15, max=1e-10)
+        params.add('Din', value=1.0e-12, min=1e-15, max=1e-10)
     elif model_num == 2:  # 2D model (Dout ≠ 0)
         params.add('y0', value=1.0, min=0.95, max=1.00)
-        params.add('Din', value=1.0e-13, min=1e-14, max=1e-11)
-        params.add('Dout', value=1.0e-12, min=1e-13, max=1e-11)
+        params.add('Din', value=1.0e-12, min=1e-14, max=1e-10)
+        params.add('Dout', value=1.0e-12, min=1e-14, max=1e-10)
     elif model_num == 3:  # 3D Monoexponential
         params.add('y0', value=1.0, min=0.99, max=1.02)
-        params.add('D', value=2.0e-13, min=1e-16, max=9e-10)
+        params.add('D', value=2.0e-12, min=1e-16, max=9e-10)
     elif model_num == 4:  # 3D Biexponential
-        params.add('y0', value=1.0, min=0.95, max = 1.0)
-        params.add('D1', value=1.00e-13, min=1e-14, max=1e-11)
-        params.add('D2', value=1.00e-12, min=1e-14, max=1e-11)
+        params.add('y0', value=1.0, min=0.95, max=1.0)
+        params.add('D1', value=5.00e-12, min=1e-14, max=1e-10)
+        params.add('D2', value=1.00e-12, min=1e-14, max=1e-10)
         params.add('f', value=0.5, min=0.0, max=1.0)
     elif model_num == 5:  # 3D Stretched Exponential
         params.add('y0', value=1.0, min=0.97, max=1.0)
-        params.add('D', value=1.0e-13, min=1e-15, max=9e-10)
+        params.add('D', value=1.0e-12, min=1e-15, max=9e-10)
         params.add('b', value=0.8, min=0.1, max=1.0)
     elif model_num == 6:  # 3D Stretched Exponential
         params.add('y0', value=1.0, min=0.97, max=1.0)
@@ -582,7 +582,7 @@ def main():
 
     # Plot options (you can modify these as needed)
     plot_options = {
-        'x_limit': None, 'y_limit': None, 'legend_fontsize': 20,
+        'x_limit': None, 'y_limit': None, 'legend_fontsize': 14,
         'x_scientific': True, 'y_scientific': True, 'x_decimal_places': 0, 'y_decimal_places': 3,
         'x_label': "B (s/m2)", 'y_label': 'Normalized intensity (a.u.)',
         'x_label_fontsize': 20, 'y_label_fontsize': 20,
