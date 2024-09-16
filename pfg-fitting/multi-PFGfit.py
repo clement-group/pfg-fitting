@@ -1,19 +1,17 @@
-# -*- coding: utf-8 -*-
 """
-Created on Sat Jul 13 12:31:53 2024
+Created by Amit Bhattacharya on Sat Jul 13 12:31:53 2024
+Updated by Tyler Pennebaker in September 2024
 
-
+After fitting PFG data in the Topspin save it as .txt file.
+For any other .txt file, should provide n1 and n2 values in the main function
+It has option for method and model choice to fit the data
+One can use weigted average for the data, True or False option
+color for model or method controlled by plot option
+Intensity weight is preffered
+10-4 is multiplied to convert gauss/cm to T/m
+D and d are big and small delta in seconds
+v is gyromagentic ratio
 """
-# After fitting PFG data in the Topspin save it as .txt file.
-# For any other .txt file, should provide n1 and n2 values in the main function
-# It has option for method and model choice to fit the data
-# One can use weigted average for the data, True or False option
-# color for model or method controlled by plot option
-# Intensity weight is preffered
-# 10-4 is multiplied to convert gauss/cm to T/m
-# D and d are big and small delta in seconds
-# v is gyromagentic ratio
-
 
 import os
 import re
